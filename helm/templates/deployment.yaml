@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hello-helm.fullname" . }}
+  labels: {{ include "hello-helm.labels.standard" . | nindent 4 }}
+spec:
+  strategy: {{- toYaml .Values.strategy | nindent 4 }}
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels: {{ include "hello-helm.labels.matchLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels: {{ include "hello-helm.labels.matchLabels" . | nindent 8 }}
+    spec:
+      nodeSelector: {{- toYaml .Values.nodeSelectorLabels | nindent 8 }}
+      serviceAccount: {{ include "hello-helm.fullname" . }}
+      containers:
+        - name: {{ include "hello-helm.fullname" . }}
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: {{ .Values.pods.name }}
+              containerPort: {{ .Values.pods.port }}
+              protocol: TCP
+          envFrom:
+            {{- if .Values.extraEnvVars }}
+            - configMapRef:
+                name: {{ include "hello-helm.fullname" . }}-config
+            {{- end }}
+            {{- if .Values.secret.create }}
+            - secretRef:
+                name: {{ include "hello-helm.fullname" . }}-secret
+            {{- end }}
+          resources: {{- toYaml .Values.resources | nindent 12 }}
+          startupProbe: {{- toYaml .Values.startupProbe | nindent 12 }}
+            tcpSocket:
+              port: {{ .Values.pods.name }}
+          readinessProbe: {{- toYaml .Values.readinessProbe | nindent 12 }}
+            httpGet:
+              path: {{ .Values.pods.healthcheckPath }}
+              port: {{ .Values.pods.name }}
+              scheme: HTTP
+          livenessProbe: {{- toYaml .Values.livenessProbe | nindent 12 }}
+            tcpSocket:
+              port: {{ .Values.pods.name }}

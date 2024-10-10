@@ -1,0 +1,33 @@
+# Created by https://www.toptal.com/developers/gitignore/api/helm
+# Edit at https://www.toptal.com/developers/gitignore?templates=helm
+
+### Helm ###
+# Chart dependencies
+**/charts/*.tgz
+
+# End of https://www.toptal.com/developers/gitignore/api/helm
+*.http
+**/requirements.lock
+
+# Logs
+logs
+*.log
+
+# OS
+.DS_Store
+
+# IDEs and editors
+.idea
+.project
+.classpath
+.c9
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json

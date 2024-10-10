@@ -1,0 +1,99 @@
+## String to partially override common.names.fullname template (will maintain the release name)
+##
+nameOverride:
+fullnameOverride:
+
+# extraEnvVars: additional env variables. Will be populated in config map (shouldn't be a secret values)
+extraEnvVars: []
+
+nodeSelectorLabels:
+  type: public
+  karpenter.sh/capacity-type: on-demand
+
+## Secret
+secret:
+  create: false
+  key: ''
+
+## image
+##
+image:
+  # repository where image will be taken from
+  repository: 509962170850.dkr.ecr.us-east-1.amazonaws.com/<your-image>
+
+  # tag: image tag (hould use a fixed tag or the SHA of the image.
+  # It should not use the tags latest, head, canary, or other tags that are designed to be "floating")
+  tag: latest
+
+  ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+  ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+  pullPolicy: IfNotPresent
+
+## updateStrategy for service
+## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+##
+strategy:
+  rollingUpdate:
+    maxSurge: 30%
+    maxUnavailable: 10%
+  type: RollingUpdate
+
+# replicas: number of pods to run
+replicas: 1
+
+pods:
+  healthcheckPath: '/health'
+  port: 80
+  name: &podPortName api
+
+## Service parameters
+##
+service:
+  # type: type of the service
+  type: ClusterIP
+  httpPort: &httpPort 80
+  ports:
+    - port: !!int 443
+      name: https
+      targetPort: api
+      protocol: TCP
+    - port: *httpPort
+      name: http
+      targetPort: api
+      protocol: TCP
+
+# Resources: requests and limits for deployment
+resources:
+  # requests: amount of cpu and memory, which we reserve
+  requests:
+    cpu: 150m
+    memory: 400Mi
+  # limits: amount of cpu and memory, which pod can use the most of
+  limits:
+    cpu: 500m
+    memory: 700Mi
+
+## liveness, readiness and startup probes
+## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-probes
+## and greate topic [https://medium.com/swlh/fantastic-probes-and-how-to-configure-them-fef7e030bd2f
+startupProbe:
+  initialDelaySeconds: 5
+  timeoutSeconds: 10
+  periodSeconds: 5
+  successThreshold: 1
+  failureThreshold: 200
+livenessProbe:
+  initialDelaySeconds: 5
+  timeoutSeconds: 10
+  periodSeconds: 10
+  successThreshold: 1
+  failureThreshold: 3
+readinessProbe:
+  initialDelaySeconds: 5
+  timeoutSeconds: 10
+  periodSeconds: 10
+  successThreshold: 1
+  failureThreshold: 3
+
+coralogix:
+  appName: scanners
